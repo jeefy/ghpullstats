@@ -1,0 +1,100 @@
+<html>
+    <body>
+        <div>
+            <select id="image-selector">
+                <option value="all">All</option>
+            </select>
+            <canvas id="myChart"></canvas>
+          </div>
+          
+          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+          <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+          
+          <script>
+            $(function () {
+                var ctx = document.getElementById("myChart").getContext("2d");
+                // examine example_data.json for expected response data
+                var json_url = "https://storage.googleapis.com/ghp-stats/ublue-os/data.json";
+
+                // draw empty chart
+                var myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: "Ublue OS",
+                                fill: false,
+                                lineTension: 0.1,
+                                backgroundColor: "rgba(75,192,192,0.4)",
+                                borderColor: "rgba(75,192,192,1)",
+                                borderCapStyle: 'butt',
+                                borderDash: [],
+                                borderDashOffset: 0.0,
+                                borderJoinStyle: 'miter',
+                                pointBorderColor: "rgba(75,192,192,1)",
+                                pointBackgroundColor: "#fff",
+                                pointBorderWidth: 1,
+                                pointHoverRadius: 5,
+                                pointHoverBackgroundColor: "rgba(75,192,192,1)",
+                                pointHoverBorderColor: "rgba(220,220,220,1)",
+                                pointHoverBorderWidth: 2,
+                                pointRadius: 1,
+                                pointHitRadius: 10,
+                                data: [],
+                                spanGaps: false,
+                            }
+                        ]
+                    },
+                });
+
+                ajax_chart(myChart, json_url);
+
+                // function to update our chart
+                function ajax_chart(chart, url, data) {
+                    var data = data || {};
+
+                    $.getJSON(url, data).done(function(response) {
+                        latestDay = Object.keys(response)[Object.keys(response).length -1];
+                        console.log(latestDay);
+                        for (i in response[latestDay]) {
+                            console.log(i);
+                            $('#image-selector').append('<option value="'+i+'">'+i+'</option>');
+                        }
+
+                        $( "#image-selector" )
+                        .on( "change", function() {
+                            var str = "all";
+                            $( "select option:selected" ).each( function() {
+                            str = $( this ).val();
+                            } );
+                            console.log("loading data for "+str);
+                            loadData(chart, response, str);
+                        } );
+
+                        loadData(chart, response, "all");
+                    });
+                }
+                function loadData(chart, data, label){
+                    labels = [];
+                    pulls = [];
+                    for (k in data) {
+                        labels.push(k);
+                        if(label == "all"){
+                            total = 0;
+                            for(i in data[k]){
+                                total += data[k][i];
+                            }
+                            pulls.push(total);
+                        } else {
+                            pulls.push(data[k][label]);
+                        }
+                    }
+                    chart.data.labels = labels;
+                    chart.data.datasets[0].data = pulls;
+                    chart.update(); // finally update our chart
+                }
+            });
+        </script>
+    </body>
+</html>

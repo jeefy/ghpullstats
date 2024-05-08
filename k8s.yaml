@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ublue-ghpstats
+spec:
+  schedule: "0 23 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: ghpstats
+            image: jeefy/ghpstats:latest
+            imagePullPolicy: Always
+            volumeMounts:
+            - name: data
+              mountPath: /usr/src/app/data
+            - name: creds
+              mountPath: /usr/src/app/secrets
+            resources:
+              limits:
+                cpu: "500m" # This could probably be tuned lower
+                memory: "512Mi" # This could probably be tuned lower
+          restartPolicy: OnFailure
+          volumes:
+          - name: data
+            persistentVolumeClaim:
+              claimName: ghpstats
+          - name: creds
+            secret:
+              secretName: ghp-gcs-creds
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ghpstats
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
